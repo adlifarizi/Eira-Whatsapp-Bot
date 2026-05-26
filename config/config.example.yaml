@@ -1,0 +1,19 @@
+bot:
+  prefix: "."
+  owners:
+    - "628xxx"
+  usePairingCode: true
+  phoneNumber: "628xxx"
+
+features:
+  sticker: true
+
+ai:
+  provider: "gemini"
+  model: "gemini-3.1-flash-lite"
+  enableSearchGrounding: true
+  systemInstruction: "Kamu adalah Eira, asisten AI WhatsApp yang cerdas."
+  maxHistoryLimit: 10
+  temperature: 0.75
+  maxOutputTokens: 800
+

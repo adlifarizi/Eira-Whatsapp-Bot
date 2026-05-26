@@ -1,0 +1,33 @@
+services:
+  bot-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: eira-whatsapp-bot:latest
+    container_name: eira-bot-prod
+    restart: unless-stopped
+    volumes:
+      - ./storage:/app/storage
+      - ./assets:/app/assets
+      - ./config:/app/config
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+
+  bot-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: eira-whatsapp-bot:dev
+    container_name: eira-bot-dev
+    command: npm run dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug

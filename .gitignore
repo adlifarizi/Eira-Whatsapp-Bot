@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build files
+dist/
+
+# Environment variables
+.env
+
+# Storage and session data (contains private sessions and database)
+storage/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# Config
+config/config.yaml
