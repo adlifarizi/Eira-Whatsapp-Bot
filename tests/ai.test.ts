@@ -117,6 +117,31 @@ describe('AI Modular Service', () => {
         })
       }));
     });
+
+    it('should include inlineData when images are provided', async () => {
+      const provider = new GeminiProvider(mockConfig, logger);
+      const dummyBuffer = Buffer.from('fake-image-bytes');
+      await provider.generate('Jelaskan gambar ini', {
+        images: [{ data: dummyBuffer, mimeType: 'image/jpeg' }],
+      });
+
+      expect(mockGenerateContent).toHaveBeenCalledWith(expect.objectContaining({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  data: dummyBuffer.toString('base64'),
+                  mimeType: 'image/jpeg',
+                }
+              },
+              { text: 'Jelaskan gambar ini' }
+            ]
+          }
+        ]
+      }));
+    });
   });
 
   describe('AIService Prompt Loading', () => {
@@ -251,6 +276,37 @@ describe('AI Modular Service', () => {
         jid: '62898xxx@s.whatsapp.net',
         role: 'model',
         content: 'Halo! Saya Eira, asisten AI Anda.'
+      }));
+    });
+
+    it('should handle image input and pass to provider', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      vi.mocked(db.limit).mockResolvedValueOnce([]);
+
+      const aiService = new AIService(mockConfig, logger);
+      const dummyBuffer = Buffer.from('dummy-image');
+      await aiService.ask('Apa objek ini?', mockCtx, { buffer: dummyBuffer, mimeType: 'image/png' });
+
+      expect(mockGenerateContent).toHaveBeenCalledWith(expect.objectContaining({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  data: dummyBuffer.toString('base64'),
+                  mimeType: 'image/png',
+                }
+              },
+              { text: 'Apa objek ini?' }
+            ]
+          }
+        ]
+      }));
+
+      expect(db.values).toHaveBeenCalledWith(expect.objectContaining({
+        role: 'user',
+        content: '[Gambar] Apa objek ini?'
       }));
     });
   });

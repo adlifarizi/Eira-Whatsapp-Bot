@@ -25,17 +25,37 @@ export class GeminiProvider implements AIProvider {
       tools.push({ googleSearch: {} });
     }
 
-    let contents: any = prompt;
+    const userParts: any[] = [];
+    if (options?.images && options.images.length > 0) {
+      for (const img of options.images) {
+        const base64Data = Buffer.isBuffer(img.data) ? img.data.toString('base64') : img.data;
+        userParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: img.mimeType,
+          },
+        });
+      }
+    }
 
+    if (prompt) {
+      userParts.push({ text: prompt });
+    }
+
+    let contents: any;
     if (options?.conversationHistory && options.conversationHistory.length > 0) {
       const historyContents = options.conversationHistory.map(msg => ({
         role: msg.role === 'model' ? 'model' : 'user',
-        parts: [{ text: msg.content }]
+        parts: [{ text: msg.content }],
       }));
       contents = [
         ...historyContents,
-        { role: 'user', parts: [{ text: prompt }] }
+        { role: 'user', parts: userParts },
       ];
+    } else if (userParts.length === 1 && userParts[0].text && (!options?.images || options.images.length === 0)) {
+      contents = prompt;
+    } else {
+      contents = [{ role: 'user', parts: userParts }];
     }
 
     try {

@@ -3,12 +3,18 @@ export interface AIMessage {
   content: string;
 }
 
+export interface AIImagePart {
+  data: Buffer | string;
+  mimeType: string;
+}
+
 export interface AIGenerateOptions {
   systemInstruction?: string;
   enableSearchGrounding?: boolean;
   conversationHistory?: AIMessage[];
   temperature?: number;
   maxOutputTokens?: number;
+  images?: AIImagePart[];
 }
 
 export interface SearchSource {

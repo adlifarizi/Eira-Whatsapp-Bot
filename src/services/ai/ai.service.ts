@@ -18,9 +18,9 @@ export class AIService {
   }
 
   /**
-   * Generates a grounded response for a given user prompt.
+   * Generates a grounded response for a given user prompt and optional image.
    */
-  async ask(prompt: string, ctx: CommandContext): Promise<AIResponse> {
+  async ask(prompt: string, ctx: CommandContext, image?: { buffer: Buffer; mimeType: string }): Promise<AIResponse> {
     const baseSystemInstruction = this.loadSystemInstruction();
     const enableSearchGrounding = this.config.ai?.enableSearchGrounding ?? false;
 
@@ -67,6 +67,8 @@ PANDUAN TAMBAHAN:
       } else {
         finalPrompt = `[Pesan yang Dikutip/Dibalas dari ${quotedSenderNumber}]:\n"${quotedText}"\n\n(Tanggapi atau jawab pesan di atas)`;
       }
+    } else if (!finalPrompt && image) {
+      finalPrompt = 'Jelaskan gambar ini.';
     }
 
     // Retrieve previous history for JID
@@ -96,10 +98,11 @@ PANDUAN TAMBAHAN:
     // Save user query/prompt to DB
     if (remoteJid) {
       try {
+        const loggedPrompt = image ? `[Gambar] ${finalPrompt}` : finalPrompt;
         await db.insert(aiChatHistory).values({
           jid: remoteJid,
           role: 'user',
-          content: finalPrompt,
+          content: loggedPrompt,
           timestamp: Date.now(),
         });
       } catch (error) {
@@ -109,7 +112,7 @@ PANDUAN TAMBAHAN:
 
     const finalSystemInstruction = `${baseSystemInstruction}\n\n${dynamicContext}`;
 
-    this.logger.info(`Sending prompt to ${this.activeProvider.name} (Sender: ${pushName})`);
+    this.logger.info(`Sending prompt to ${this.activeProvider.name} (Sender: ${pushName}${image ? ', with Image' : ''})`);
 
     const temperature = this.config.ai?.temperature ?? 0.75;
     const maxOutputTokens = this.config.ai?.maxOutputTokens ?? 800;
@@ -120,6 +123,7 @@ PANDUAN TAMBAHAN:
       conversationHistory,
       temperature,
       maxOutputTokens,
+      images: image ? [{ data: image.buffer, mimeType: image.mimeType }] : undefined,
     });
 
     // Save AI response to DB
