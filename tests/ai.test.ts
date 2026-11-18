@@ -142,6 +142,35 @@ describe('AI Modular Service', () => {
         ]
       }));
     });
+
+    it('should drop leading model turn and enforce alternating roles in history', async () => {
+      const provider = new GeminiProvider(mockConfig, logger);
+      await provider.generate('Pertanyaan ketiga', {
+        conversationHistory: [
+          { role: 'model', content: 'Halo dari model awal' }, // should be dropped
+          { role: 'user', content: 'Pertanyaan satu' },
+          { role: 'user', content: 'Pertanyaan satu lanjutan' }, // should merge
+          { role: 'model', content: 'Jawaban satu' },
+        ]
+      });
+
+      expect(mockGenerateContent).toHaveBeenCalledWith(expect.objectContaining({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: 'Pertanyaan satu' }, { text: 'Pertanyaan satu lanjutan' }]
+          },
+          {
+            role: 'model',
+            parts: [{ text: 'Jawaban satu' }]
+          },
+          {
+            role: 'user',
+            parts: [{ text: 'Pertanyaan ketiga' }]
+          }
+        ]
+      }));
+    });
   });
 
   describe('AIService Prompt Loading', () => {
@@ -208,6 +237,34 @@ describe('AI Modular Service', () => {
       }));
       expect(mockGenerateContent).toHaveBeenCalledWith(expect.objectContaining({
         contents: expect.stringContaining('[Pertanyaan/Instruksi Pengguna]:\nTolong terjemahkan ini'),
+      }));
+    });
+
+    it('should format finalPrompt with quoted message context from imageMessage', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      const mockCtxWithImageQuoted = {
+        msg: {
+          key: { remoteJid: '62898xxx@s.whatsapp.net' },
+          message: {
+            imageMessage: {
+              contextInfo: {
+                quotedMessage: {
+                  conversation: 'Caption from quoted message'
+                },
+                participant: '62899999@s.whatsapp.net'
+              }
+            }
+          },
+          pushName: 'Farizi'
+        },
+        config: mockConfig
+      } as any;
+
+      const aiService = new AIService(mockConfig, logger);
+      await aiService.ask('Jelaskan ini', mockCtxWithImageQuoted);
+
+      expect(mockGenerateContent).toHaveBeenCalledWith(expect.objectContaining({
+        contents: expect.stringContaining('[Pesan yang Dikutip/Dibalas dari 62899999]:\n"Caption from quoted message"'),
       }));
     });
 

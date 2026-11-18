@@ -51,7 +51,8 @@ PANDUAN TAMBAHAN:
     `.trim();
 
     // Check for quoted message context
-    const contextInfo = ctx.msg.message?.extendedTextMessage?.contextInfo;
+    const contextInfo = ctx.msg.message?.extendedTextMessage?.contextInfo ||
+                        ctx.msg.message?.imageMessage?.contextInfo;
     const quotedMessage = contextInfo?.quotedMessage;
     const quotedSender = contextInfo?.participant || '';
     const quotedText = quotedMessage?.conversation ||
@@ -80,7 +81,7 @@ PANDUAN TAMBAHAN:
           .select()
           .from(aiChatHistory)
           .where(eq(aiChatHistory.jid, remoteJid))
-          .orderBy(desc(aiChatHistory.timestamp))
+          .orderBy(desc(aiChatHistory.id))
           .limit(limit);
 
         // Reverse to keep oldest first (chronological order)
@@ -92,21 +93,6 @@ PANDUAN TAMBAHAN:
           }));
       } catch (error) {
         this.logger.error(error, `Failed to retrieve chat history for ${remoteJid}`);
-      }
-    }
-
-    // Save user query/prompt to DB
-    if (remoteJid) {
-      try {
-        const loggedPrompt = image ? `[Gambar] ${finalPrompt}` : finalPrompt;
-        await db.insert(aiChatHistory).values({
-          jid: remoteJid,
-          role: 'user',
-          content: loggedPrompt,
-          timestamp: Date.now(),
-        });
-      } catch (error) {
-        this.logger.error(error, `Failed to save user prompt to chat history`);
       }
     }
 
@@ -126,9 +112,16 @@ PANDUAN TAMBAHAN:
       images: image ? [{ data: image.buffer, mimeType: image.mimeType }] : undefined,
     });
 
-    // Save AI response to DB
+    // Save user query and AI response to DB only after successful generation
     if (remoteJid && response.text) {
       try {
+        const loggedPrompt = image ? `[Gambar] ${finalPrompt}` : finalPrompt;
+        await db.insert(aiChatHistory).values({
+          jid: remoteJid,
+          role: 'user',
+          content: loggedPrompt,
+          timestamp: Date.now(),
+        });
         await db.insert(aiChatHistory).values({
           jid: remoteJid,
           role: 'model',
@@ -136,7 +129,7 @@ PANDUAN TAMBAHAN:
           timestamp: Date.now(),
         });
       } catch (error) {
-        this.logger.error(error, `Failed to save AI response to chat history`);
+        this.logger.error(error, `Failed to save chat history`);
       }
     }
 

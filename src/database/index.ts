@@ -30,6 +30,7 @@ sqlite.exec(`
     content TEXT NOT NULL,
     timestamp INTEGER NOT NULL
   );
+  CREATE INDEX IF NOT EXISTS idx_ai_chat_history_jid_id ON ai_chat_history (jid, id DESC);
 `);
 
 const db = drizzle(sqlite, { schema });

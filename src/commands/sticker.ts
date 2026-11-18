@@ -18,7 +18,7 @@ export default class StickerCommand implements Command {
 
     if (!isImage && !isVideo) {
       await ctx.sock.sendMessage(ctx.msg.key!.remoteJid!, { 
-        text: 'Silakan kirim atau balas gambar, gif, atau video dengan .sticker' 
+        text: `Silakan kirim atau balas gambar, gif, atau video dengan ${ctx.config.bot.prefix}sticker` 
       });
       return;
     }

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs-extra';
 import path from 'path';
@@ -39,9 +40,9 @@ function getVideoDuration(filePath: string): Promise<number> {
  * Optimized for WhatsApp limits (max 6s, < 1MB).
  */
 export async function videoToSticker(buffer: Buffer): Promise<Buffer> {
-  const ts = Date.now();
-  const inputPath = path.join(tempDir, `${ts}_in.mp4`);
-  const outputPath = path.join(tempDir, `${ts}_out.webp`);
+  const fileId = `${Date.now()}_${crypto.randomUUID()}`;
+  const inputPath = path.join(tempDir, `${fileId}_in.mp4`);
+  const outputPath = path.join(tempDir, `${fileId}_out.webp`);
 
   await fs.writeFile(inputPath, buffer);
 
@@ -60,6 +61,7 @@ export async function videoToSticker(buffer: Buffer): Promise<Buffer> {
             'format=rgba'
           ])
           .outputOptions([
+            '-y',
             '-lossless', '0',
             '-quality', `${quality}`,
             '-compression_level', '6',

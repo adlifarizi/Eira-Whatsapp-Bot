@@ -30,12 +30,12 @@ export default class MenuCommand implements Command {
     categories.forEach((commands, category) => {
       text += `*${category.toUpperCase()}*\n`;
       commands.forEach((name) => {
-        text += `  .${name}\n`;
+        text += `  ${ctx.config.bot.prefix}${name}\n`;
       });
       text += '\n';
     });
 
-    text += 'Gunakan `.help <perintah>` untuk info lebih lanjut.';
+    text += `Gunakan \`${ctx.config.bot.prefix}help <perintah>\` untuk info lebih lanjut.`;
 
     await ctx.sock.sendMessage(ctx.msg.key!.remoteJid!, { text }, { quoted: ctx.msg as WAMessage });
   }

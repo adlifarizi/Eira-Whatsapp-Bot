@@ -17,7 +17,8 @@ export default class AskCommand implements Command {
     const prompt = ctx.args.join(' ').trim();
     const jid = ctx.msg.key!.remoteJid!;
 
-    const contextInfo = ctx.msg.message?.extendedTextMessage?.contextInfo;
+    const contextInfo = ctx.msg.message?.extendedTextMessage?.contextInfo ||
+                        ctx.msg.message?.imageMessage?.contextInfo;
     const quoted = contextInfo?.quotedMessage;
     
     // Check for image directly in message or in quoted message

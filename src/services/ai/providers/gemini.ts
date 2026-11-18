@@ -44,14 +44,37 @@ export class GeminiProvider implements AIProvider {
 
     let contents: any;
     if (options?.conversationHistory && options.conversationHistory.length > 0) {
-      const historyContents = options.conversationHistory.map(msg => ({
-        role: msg.role === 'model' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      }));
-      contents = [
-        ...historyContents,
-        { role: 'user', parts: userParts },
-      ];
+      const sanitizedHistory: { role: 'user' | 'model'; parts: any[] }[] = [];
+      for (const msg of options.conversationHistory) {
+        const role = msg.role === 'model' ? 'model' : 'user';
+        if (!msg.content) continue;
+
+        if (sanitizedHistory.length === 0) {
+          if (role !== 'user') continue;
+          sanitizedHistory.push({ role, parts: [{ text: msg.content }] });
+        } else {
+          const prev = sanitizedHistory[sanitizedHistory.length - 1];
+          if (prev.role === role) {
+            prev.parts.push({ text: msg.content });
+          } else {
+            sanitizedHistory.push({ role, parts: [{ text: msg.content }] });
+          }
+        }
+      }
+
+      if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === 'user') {
+        const lastUser = sanitizedHistory.pop()!;
+        userParts.unshift(...lastUser.parts);
+      }
+
+      if (sanitizedHistory.length > 0) {
+        contents = [
+          ...sanitizedHistory,
+          { role: 'user', parts: userParts },
+        ];
+      } else {
+        contents = [{ role: 'user', parts: userParts }];
+      }
     } else if (userParts.length === 1 && userParts[0].text && (!options?.images || options.images.length === 0)) {
       contents = prompt;
     } else {

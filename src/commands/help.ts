@@ -19,11 +19,11 @@ export default class HelpCommand implements Command {
     if (commandName) {
       const command = this.commands.get(commandName);
       if (!command) {
-        await ctx.sock.sendMessage(ctx.msg.key!.remoteJid!, { text: `Perintah .${commandName} tidak ditemukan.` });
+        await ctx.sock.sendMessage(ctx.msg.key!.remoteJid!, { text: `Perintah ${ctx.config.bot.prefix}${commandName} tidak ditemukan.` });
         return;
       }
 
-      const text = `*Perintah:* .${command.name}\n` +
+      const text = `*Perintah:* ${ctx.config.bot.prefix}${command.name}\n` +
                    `*Deskripsi:* ${command.description}\n` +
                    `*Kategori:* ${command.category}\n` +
                    `*Jeda:* ${command.cooldown || 0}d`;
@@ -34,7 +34,7 @@ export default class HelpCommand implements Command {
 
     // Generic help
     await ctx.sock.sendMessage(ctx.msg.key!.remoteJid!, { 
-      text: 'Gunakan `.help <nama_perintah>` untuk melihat detail perintah tertentu.\nGunakan `.menu` untuk melihat semua perintah.' 
+      text: `Gunakan \`${ctx.config.bot.prefix}help <nama_perintah>\` untuk melihat detail perintah tertentu.\nGunakan \`${ctx.config.bot.prefix}menu\` untuk melihat semua perintah.` 
     }, { quoted: ctx.msg as WAMessage });
   }
 }
